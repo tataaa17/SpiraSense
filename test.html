@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpiraSense - Test Page</title>
+    <link rel="stylesheet" href="test-style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo">Spira<span>Sense</span></div>
+            <a href="index.html" class="btn-back">← Back to Home</a>
+        </div>
+    </nav>
+
+    <main class="test-container">
+        <div class="test-grid">
+
+            <aside class="instruction-panel">
+                    <div class="panel-header">Instruksi Tes</div>
+                    <div class="panel-body">
+                        <ul>
+                            <li>Gunakan perangkat input (mouse, jari, atau stylus) secara stabil.</li>
+                            <li>Ikuti alur garis panduan spiral yang tersedia pada area kanvas.</li>
+                            <li>Lakukan penggambaran dalam satu tarikan garis yang halus dan kontinu.</li>
+                            <li>Utamakan konsistensi dan kontrol pada setiap pergerakan tangan Anda.</li>
+                            <li>Klik tombol <strong>"Analyze Spiral"</strong> untuk memulai proses analisis sistem.</li>
+                        </ul>
+                    </div>
+                </aside>
+
+            <section class="drawing-area">
+                <div class="canvas-wrapper">
+                    <div class="spiral-guide">
+                        <img src="spiral-guide.png" alt="Spiral Guide Line">
+                    </div>
+
+                    <canvas id="drawingCanvas" width="500" height="500"></canvas>
+                </div>
+
+                <div class="control-buttons">
+                    <button id="btnClear" class="btn-secondary">Clear Drawing</button>
+                    <button id="btnAnalyze" class="btn-primary">Analyze Spiral →</button>
+                    <button id="btnDownload" class="btn-outline">Download Image</button>
+                </div>
+            </section>
+
+            <aside id="resultPanel" class="result-panel hidden">
+                <div class="panel-header">AI Analysis Result</div>
+                <div class="panel-body">
+                    <div id="progressIndicator" class="progress-indicator hidden">
+                        <div class="spinner"></div>
+                        <p>Analyzing your drawing...</p>
+                    </div>
+
+                    <div id="predictionOutput" class="prediction-output hidden">
+                        <h3 id="predictionLabel">Prediction</h3>
+                        <p id="predictionConfidence">Confidence: --%</p>
+                    </div>
+                </div>
+            </aside>
+
+        </div>
+    </main>
+
+    <footer class="test-footer">
+        <p><strong>Disclaimer:</strong> Alat ini adalah skrining awal. Hasil harus dikonsultasikan dengan dokter saraf (Neurolog).</p>
+    </footer>
+
+    <script src="test-script.js"></script>
+</body>
+</html>

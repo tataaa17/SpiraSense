@@ -1,0 +1,265 @@
+/* Palette Warna SpiraSense */
+:root {
+    --tan: #D8BA98;
+    --maroon: #7F0303;
+    --alabaster: #EFE8DF;
+    --light-blue: #96C0CE;
+    --midnight-blue: #0F414A;
+    --white: #FFFFFF;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--alabaster);
+    color: var(--midnight-blue);
+    line-height: 1.6;
+    overflow-x: hidden;
+}
+
+.container {
+    max-width: 1400px; /* Diperlebar agar grid punya ruang gerak */
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+/* Navbar */
+.navbar {
+    background: var(--white);
+    padding: 1rem 0;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.navbar .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: 800;
+}
+
+.logo span {
+    color: var(--maroon);
+}
+
+.btn-back {
+    text-decoration: none;
+    color: var(--midnight-blue);
+    font-weight: 600;
+}
+
+/* --- GRID LAYOUT (Canvas di Tengah & Besar) --- */
+.test-container {
+    padding: 3rem 2rem;
+    display: flex;
+    justify-content: center;
+}
+
+.test-grid {
+    display: grid;
+    /* Kolom kiri (280px), tengah (Flexible/Besar), kanan (300px) */
+    grid-template-columns: 280px 1fr 300px; 
+    gap: 3rem;
+    align-items: start;
+    width: 100%;
+    max-width: 1300px;
+}
+
+/* Panel Styling */
+.instruction-panel, .result-panel {
+    background: var(--white);
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    overflow: hidden;
+}
+
+.panel-header {
+    background: var(--tan);
+    padding: 1.2rem;
+    font-weight: 800;
+    text-align: center; /* Judul ke tengah */
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--midnight-blue);
+}
+
+.panel-body {
+    padding: 1.5rem;
+}
+
+/* List Instruksi Baku */
+.panel-body ul {
+    list-style: none;
+    padding: 0;
+}
+
+.panel-body li {
+    margin-bottom: 1.2rem;
+    font-size: 0.9rem;
+    border-bottom: 1px solid #f0f0f0;
+    padding-bottom: 0.8rem;
+}
+
+.panel-body li:last-child {
+    border-bottom: none;
+}
+
+/* --- AREA CANVAS (Tengah) --- */
+.drawing-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Mengetengahkan canvas & tombol */
+}
+
+.canvas-wrapper {
+    position: relative;
+    width: 500px; /* Ukuran lebih besar */
+    height: 500px;
+    background: white;
+    border: 3px solid var(--midnight-blue);
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(15, 65, 74, 0.15);
+    overflow: hidden;
+}
+
+.spiral-guide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.12; /* Samar agar tidak mengganggu fokus */
+    pointer-events: none;
+    z-index: 1;
+}
+
+.spiral-guide img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+#drawingCanvas {
+    position: relative;
+    z-index: 5;
+    cursor: crosshair;
+    display: block;
+}
+
+/* Tombol Kontrol */
+.control-buttons {
+    margin-top: 2rem;
+    display: flex;
+    gap: 1rem;
+}
+
+button {
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    border: none;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: var(--midnight-blue);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--maroon);
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background: var(--light-blue);
+    color: var(--midnight-blue);
+}
+
+.btn-outline {
+    background: transparent;
+    border: 2px solid #ddd;
+}
+
+/* Form CRUD di Panel Kanan */
+.crud-form {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+}
+
+.crud-form label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.crud-form input, .crud-form textarea {
+    padding: 0.7rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin-bottom: 1.2rem;
+    font-family: inherit;
+}
+
+.btn-save {
+    background: var(--maroon);
+    color: white;
+    width: 100%;
+}
+
+/* --- FOOTER (TENGAH) --- */
+.test-footer {
+    width: 100%;
+    text-align: center;
+    padding: 3rem 1rem;
+    margin-top: 2rem;
+    border-top: 1px solid rgba(0,0,0,0.05);
+}
+
+.test-footer p {
+    max-width: 800px;
+    margin: 0 auto;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+/* Utility */
+.hidden { display: none; }
+
+/* Animasi Spinner */
+.spinner {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid var(--maroon);
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 15px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive Mobile */
+@media (max-width: 1100px) {
+    .test-grid {
+        grid-template-columns: 1fr;
+    }
+    .canvas-wrapper {
+        width: 350px;
+        height: 350px;
+    }
+}
