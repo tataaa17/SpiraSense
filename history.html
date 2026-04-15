@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpiraSense - Riwayat Pemeriksaan</title>
+    <link rel="stylesheet" href="history-style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo">Spira<span>Sense</span></div>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="history.html" class="active">History</a></li>
+                <li><a href="test.html" class="btn-nav">Start Test</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="history-container">
+        <div class="header-section">
+            <h1>Riwayat Pemeriksaan</h1>
+            <p>Kelola dan tinjau hasil analisis deteksi dini Parkinson pasien secara profesional.</p>
+        </div>
+
+        <div class="table-card">
+            <div class="table-header">
+                <h3>Daftar Hasil Tes (Data Persistence)</h3>
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Cari nama pasien...">
+                </div>
+            </div>
+            
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tanggal</th>
+                            <th>Nama Pasien</th>
+                            <th>Visual</th>
+                            <th>Hasil Prediksi</th>
+                            <th>Keyakinan</th>
+                            <th>Catatan Medis</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyBody">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <div id="imageModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Preview Spiral Drawing</h3>
+                <button class="close-btn" onclick="closeModal('imageModal')">&times;</button>
+            </div>
+            <div class="image-preview-container">
+                <img id="previewImg" src="" alt="Spiral Drawing">
+            </div>
+        </div>
+    </div>
+
+    <div id="editModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Perbarui Catatan Medis</h3>
+                <button class="close-btn" onclick="closeModal('editModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <label for="editNotes">Catatan Baru:</label>
+                <textarea id="editNotes" rows="4"></textarea>
+                <div class="modal-btns">
+                    <button class="btn-outline" onclick="closeModal('editModal')">Batal</button>
+                    <button id="btnUpdateSave" class="btn-primary">Simpan Perubahan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="history-footer">
+        <p><strong>SpiraSense Database System</strong> &copy; 2026. Data ini bersifat rahasia dan hanya untuk keperluan medis.</p>
+    </footer>
+
+    <script src="history-script.js"></script>
+</body>
+</html>

@@ -50,10 +50,41 @@ body {
     color: var(--maroon);
 }
 
+/* --- DESAIN TOMBOL BACK TO HOME BARU --- */
 .btn-back {
+    display: flex;
+    align-items: center;
+    gap: 10px;                  /* Jarak antara ikon dan teks */
     text-decoration: none;
     color: var(--midnight-blue);
-    font-weight: 600;
+    font-weight: 700;
+    font-size: 0.85rem;
+    padding: 8px 20px;
+    border: 2px solid var(--midnight-blue);
+    border-radius: 50px;        /* Membuat bentuk pill/lonjong */
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: transparent;
+}
+
+.btn-back svg {
+    transition: transform 0.3s ease;
+}
+
+/* Efek saat mouse mendekat (Hover) */
+.btn-back:hover {
+    background-color: var(--midnight-blue);
+    color: var(--white);        /* Teks jadi putih saat di-hover */
+    box-shadow: 0 4px 12px rgba(15, 65, 74, 0.2);
+    transform: translateY(-2px); /* Tombol sedikit naik */
+}
+
+.btn-back:hover svg {
+    transform: scale(1.1);      /* Ikon membesar sedikit */
+}
+
+/* Efek saat diklik */
+.btn-back:active {
+    transform: translateY(0);
 }
 
 /* --- GRID LAYOUT (Canvas di Tengah & Besar) --- */
