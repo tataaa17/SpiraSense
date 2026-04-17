@@ -1,3 +1,11 @@
+:root {
+    --midnight-blue: #2D3E50;
+    --white: #ffffff;
+    --tan: #f0e6d6;
+    --maroon: #800000;
+    --orange: #ff8c00;
+    --light-bg: #fdfaf5;
+}
 .about-hero {
     background-color: var(--midnight-blue);
     color: var(--white);

@@ -1,4 +1,4 @@
-// Mengambil elemen-elemen penting
+// --- 1. INISIALISASI ELEMEN ---
 const canvas = document.getElementById('drawingCanvas');
 const ctx = canvas.getContext('2d');
 const btnClear = document.getElementById('btnClear');
@@ -8,183 +8,160 @@ const resultPanel = document.getElementById('resultPanel');
 const progressIndicator = document.getElementById('progressIndicator');
 const predictionOutput = document.getElementById('predictionOutput');
 
-// Variabel untuk melacak status menggambar
-let isDrawing = false;
-let lastX = 0;
-let lastY = 0;
+// Elemen Alur Pasien
+const formWarga = document.getElementById('formWarga');
+const sectionPasien = document.getElementById('patientRegistration');
+const sectionTes = document.getElementById('mainTestGrid');
+const displayNama = document.getElementById('displayNama');
+const displayNik = document.getElementById('displayNik');
 
-// Pengaturan awal canvas (menggunakan palette Maroon untuk garis)
-ctx.strokeStyle = '#7F0303'; // Maroon
-ctx.lineWidth = 3;
+// Variabel Drawing
+let isDrawing = false;
+let lastX = 0, lastY = 0;
+
+// Pengaturan Canvas (Warna Maroon khas SpiraSense)
+ctx.strokeStyle = '#7F0303'; 
+ctx.lineWidth = 4;
 ctx.lineJoin = 'round';
 ctx.lineCap = 'round';
 
-// --- FUNGSI DRAWING ---
+// --- 2. LOGIKA PENDAFTARAN PASIEN ---
+formWarga.addEventListener('submit', async (e) => {
+    e.preventDefault(); // Mencegah refresh halaman
+    console.log("Mendaftarkan pasien...");
 
-function startDrawing(e) {
-    isDrawing = true;
-    [lastX, lastY] = getCoordinates(e);
-}
+    const dataPasien = {
+        nik: document.getElementById('nik').value,
+        nama: document.getElementById('nama').value,
+        umur: document.getElementById('umur').value,
+        alamat: document.getElementById('alamat').value
+    };
 
-function stopDrawing() {
-    isDrawing = false;
-    ctx.beginPath(); // Mereset path agar garis tidak tersambung ke titik baru
-}
+    try {
+        const response = await fetch('http://127.0.0.1:5000/api/register-warga', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dataPasien),
+            credentials: 'include' // PENTING: Mengirim cookie session petugas
+        });
 
-function draw(e) {
-    if (!isDrawing) return; // Berhenti jika mouse tidak ditekan
+        const result = await response.json();
 
-    const [x, y] = getCoordinates(e);
+        if (result.status === 'success') {
+            // Simpan ID Warga untuk proses prediksi nanti
+            localStorage.setItem('current_warga_id', result.warga_id);
+            
+            // Update Banner Info Pasien
+            displayNama.innerText = dataPasien.nama;
+            displayNik.innerText = dataPasien.nik;
 
-    ctx.beginPath();
-    ctx.moveTo(lastX, lastY);
-    ctx.lineTo(x, y);
-    ctx.stroke();
+            // Transisi Visual
+            sectionPasien.classList.add('hidden');
+            sectionTes.classList.remove('hidden');
+            console.log("Registrasi warga sukses, ID:", result.warga_id);
+        } else {
+            alert("Gagal daftar: " + result.message);
+        }
+    } catch (err) {
+        console.error("Error pendaftaran:", err);
+        alert("Gagal menghubungi server. Pastikan Flask sudah jalan.");
+    }
+});
 
-    [lastX, lastY] = [x, y];
-}
-
-// Mendapatkan koordinat yang benar (mouse vs touch)
+// --- 3. FUNGSI DRAWING (Sesuai kode kamu) ---
 function getCoordinates(e) {
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
-
     let x, y;
-    if (e.touches) { // Jika touchscreen
+    if (e.touches) {
         x = (e.touches[0].clientX - rect.left) * scaleX;
         y = (e.touches[0].clientY - rect.top) * scaleY;
-    } else { // Jika mouse
+    } else {
         x = (e.clientX - rect.left) * scaleX;
         y = (e.clientY - rect.top) * scaleY;
     }
     return [x, y];
 }
 
-// Event Listeners untuk Mouse
+function startDrawing(e) { isDrawing = true; [lastX, lastY] = getCoordinates(e); }
+function stopDrawing() { isDrawing = false; ctx.beginPath(); }
+function draw(e) {
+    if (!isDrawing) return;
+    const [x, y] = getCoordinates(e);
+    ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(x, y); ctx.stroke();
+    [lastX, lastY] = [x, y];
+}
+
 canvas.addEventListener('mousedown', startDrawing);
 canvas.addEventListener('mousemove', draw);
 canvas.addEventListener('mouseup', stopDrawing);
-canvas.addEventListener('mouseout', stopDrawing);
-
-// Event Listeners untuk Touchscreen (Mobile)
-canvas.addEventListener('touchstart', (e) => {
-    e.preventDefault(); // Mencegah scrolling saat menggambar
-    startDrawing(e);
-});
-canvas.addEventListener('touchmove', (e) => {
-    e.preventDefault();
-    draw(e);
-});
+canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(e); }, {passive: false});
+canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); }, {passive: false});
 canvas.addEventListener('touchend', stopDrawing);
 
-
-// --- FUNGSI KONTROL ---
-
-// Tombol Clear: Menghapus gambar
-btnClear.addEventListener('click', () => {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    // Sembunyikan hasil lama jika ada
-    resultPanel.classList.add('hidden');
-});
-
-// Tombol Download: Menyimpan gambar sebagai PNG (Opsional)
-btnDownload.addEventListener('click', () => {
-    const dataURL = canvas.toDataURL('image/png');
-    const link = document.createElement('a');
-    link.href = dataURL;
-    link.download = 'spirasense-drawing.png';
-    link.click();
-});
-
-
-// --- FUNGSI ANALISIS (HUNGKAN KE BACKEND) ---
-
+// --- 4. LOGIKA ANALISIS & AUTO-SAVE ---
 btnAnalyze.addEventListener('click', async () => {
-    // 1. Validasi: Pastikan user sudah menggambar sesuatu (cek pixel data)
+    // Validasi apakah sudah menggambar
     const pixelData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
     let hasDrawing = false;
-    for (let i = 3; i < pixelData.length; i += 4) { // Cek alpha channel
-        if (pixelData[i] > 0) {
-            hasDrawing = true;
-            break;
-        }
+    for (let i = 3; i < pixelData.length; i += 4) {
+        if (pixelData[i] > 0) { hasDrawing = true; break; }
     }
 
     if (!hasDrawing) {
-        alert("Silakan gambar spiral terlebih dahulu sebelum menganalisis.");
+        alert("Silakan gambar spiral terlebih dahulu.");
         return;
     }
 
-    // 2. Tampilkan Progress Panel
+    // UI Feedback
     resultPanel.classList.remove('hidden');
     progressIndicator.classList.remove('hidden');
-    predictionOutput.classList.add('hidden'); // Sembunyikan hasil sebelumnya
+    predictionOutput.classList.add('hidden');
 
-    // 3. Ambil data gambar dalam format Base64
     const imageDataURL = canvas.toDataURL('image/png');
-
-    // --- INTEGRASI KE BACKEND PYTHON (FLASK/FASTAPI) ---
-    // Ganti URL ini dengan URL server Python temanmu (misal: http://localhost:5000/predict)
-    const backendUrl = 'http://localhost:5000/api/predict'; 
+    const wargaId = localStorage.getItem('current_warga_id');
 
     try {
         const response = await fetch('http://127.0.0.1:5000/api/predict', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                user_id: "demo_user", // Opsional, jika pakai autentikasi
-                image: imageDataURL
+                image: imageDataURL,
+                warga_id: wargaId
             }),
+            credentials: 'include' // PENTING: Agar petugas_id terekam di database
         });
 
-        if (!response.ok) {
-            throw new Error(`Server error: ${response.status}`);
-        }
+        const data = await response.json();
 
-        const data = await response.json(); // Mengambil hasil dari Python
-
-        // 4. Update UI dengan hasil prediksi
         progressIndicator.classList.add('hidden');
         predictionOutput.classList.remove('hidden');
 
-        document.getElementById('predictionLabel').innerText = data.prediction;
-        document.getElementById('predictionConfidence').innerText = `Confidence: ${(data.confidence).toFixed(1)}%`;
+        // Update Label Hasil
+        const label = document.getElementById('predictionLabel');
+        label.innerText = data.prediction;
+        document.getElementById('predictionConfidence').innerText = `Confidence: ${data.confidence}%`;
+
+        // Styling Warna Hasil
+        label.style.color = (data.prediction === "Normal") ? "#27ae60" : "#7F0303";
 
     } catch (error) {
-        // Penanganan error jika backend tidak respon
-        console.error("Analysis Error:", error);
+        console.error("Error prediksi:", error);
         progressIndicator.classList.add('hidden');
-        alert("Maaf, terjadi kesalahan saat menghubungi server analisis. Pastikan backend Python sudah berjalan.");
-        resultPanel.classList.add('hidden');
+        alert("Terjadi kesalahan saat menghubungi server prediksi.");
     }
 });
 
-const btnSave = document.getElementById('btnSave');
+// --- 5. KONTROL TOMBOL ---
+btnClear.addEventListener('click', () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    resultPanel.classList.add('hidden');
+});
 
-btnSave.addEventListener('click', async () => {
-    const patientName = document.getElementById('patientName').value;
-    const testNotes = document.getElementById('testNotes').value;
-    const prediction = document.getElementById('predictionLabel').innerText;
-    
-    if(!patientName) {
-        alert("Harap isi nama pasien sebelum menyimpan.");
-        return;
-    }
-
-    const payload = {
-        name: patientName,
-        notes: testNotes,
-        result: prediction,
-        date: new Date().toISOString()
-    };
-
-    console.log("Mengirim data ke CRUD Backend:", payload);
-    
-    // Ganti URL ini ke API Save temanmu (Python)
-    // await fetch('http://localhost:5000/api/save', { ... });
-
-    alert("Data berhasil disimpan ke database (CRUD: Create Success!)");
+btnDownload.addEventListener('click', () => {
+    const link = document.createElement('a');
+    link.download = `SpiraSense_${displayNama.innerText}_${new Date().getTime()}.png`;
+    link.href = canvas.toDataURL();
+    link.click();
 });

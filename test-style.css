@@ -294,3 +294,28 @@ button {
         height: 350px;
     }
 }
+
+.auth-box {
+    background: white;
+    padding: 2.5rem;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    border-top: 5px solid var(--maroon);
+}
+
+.auth-form input {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    border: 2px solid #eee;
+    border-radius: 8px;
+    outline: none;
+}
+
+.auth-form input:focus {
+    border-color: var(--tan);
+}
+
+.hidden {
+    display: none !important;
+}
