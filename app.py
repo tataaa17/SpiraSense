@@ -59,7 +59,7 @@ def predict():
         parkinson_prob = float(probabilities[0][1]) # Langsung konversi ke float Python
         normal_prob = float(probabilities[0][0])    # Langsung konversi ke float Python
         
-        threshold = 0.64 # Sesuai diskusi kita, biar tidak terlalu paranoid
+        threshold = 0.6 # Sesuai diskusi kita, biar tidak terlalu paranoid
         
         if parkinson_prob > threshold:
             result = "Indikasi Parkinson"
