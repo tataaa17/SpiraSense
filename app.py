@@ -1,44 +1,89 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import tensorflow as tf
-from tensorflow.keras.models import load_model
+import xgboost as xgb
 import base64
 import numpy as np
 import cv2
+import os
 
-# --- BARIS INI WAJIB ADA (Didefinisikan Dulu) ---
 app = Flask(__name__)
 CORS(app)
 
-# --- 1. LOAD MODEL ---
-# Di laptop barumu ini sudah aman
-model = load_model('model_spirasense.h5')
+# --- 1. LOAD MODEL XGBOOST ---
+# Pastikan file .json hasil download dari Colab ada di folder yang sama
+model_path = 'model_spirasense_xgb_v2.json'
 
-# --- 2. DEFINISIKAN ROUTE (PINTU API) ---
+if os.path.exists(model_path):
+    model = xgb.XGBClassifier()
+    model.load_model(model_path)
+    print("Model XGBoost berhasil dimuat!")
+else:
+    print(f"ERROR: File {model_path} tidak ditemukan di folder proyek.")
+
+# --- 2. FUNGSI PREPROCESSING (Wajib sama dengan di Colab) ---
+def preprocess_image(img_data):
+    # Decode base64 ke OpenCV format
+    nparr = np.frombuffer(base64.b64decode(img_data), np.uint8)
+    img = cv2.imdecode(nparr, cv2.IMREAD_GRAYSCALE) # Gunakan Grayscale
+    
+    # Resize ke 64x64 (Sesuai training di Colab)
+    img = cv2.resize(img, (64, 64))
+    
+    # Penajaman (Sharpening)
+    kernel = np.array([[-1,-1,-1], 
+                       [-1, 9,-1],
+                       [-1,-1,-1]])
+    img = cv2.filter2D(img, -1, kernel)
+    
+    # Flatten (Ubah jadi 1 baris/vektor untuk XGBoost)
+    img_flattened = img.flatten().reshape(1, -1)
+    return img_flattened
+
+# --- 3. ENDPOINT PREDIKSI ---
 @app.route('/api/predict', methods=['POST'])
 def predict():
     try:
         data = request.json
+        if 'image' not in data:
+            return jsonify({"error": "No image data"}), 400
+            
         image_data = data['image'].split(",")[1]
         
-        nparr = np.frombuffer(base64.b64decode(image_data), np.uint8)
-        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        # Jalankan Preprocessing
+        processed_data = preprocess_image(image_data)
         
-        # Preprocessing (Sesuaikan 224x224 dengan modelmu)
-        img = cv2.resize(img, (224, 224)) 
-        img = img / 255.0
-        img = np.expand_dims(img, axis=0)
-
-        prediction = model.predict(img)
-        confidence = float(np.max(prediction))
-        result = "Indikasi Parkinson" if np.argmax(prediction) == 1 else "Normal"
+        # Prediksi Probabilitas
+        # [0][0] = Normal, [0][1] = Parkinson
+        probabilities = model.predict_proba(processed_data)
+        parkinson_prob = float(probabilities[0][1])
+        
+        # Logika Threshold (Sensitivity Adjustment)
+        # Jika probabilitas > 0.4, kita anggap Indikasi Parkinson (lebih sensitif)
+        threshold = 0.4 
+        
+        if parkinson_prob > threshold:
+            result = "Indikasi Parkinson"
+            confidence = parkinson_prob
+        else:
+            result = "Normal"
+            confidence = probabilities[0][0]
 
         return jsonify({
             "prediction": result,
-            "confidence": confidence
+            "confidence": round(confidence * 100, 2), # Kirim dalam persentase
+            "raw_prob": parkinson_prob # Opsional untuk debugging
         })
+        
     except Exception as e:
+        print(f"Error during prediction: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
+# --- 4. ENDPOINT SIMPLE CRUD (Placeholder) ---
+@app.route('/api/save', methods=['POST'])
+def save_result():
+    # Tempat temanmu nanti menambahkan logika simpan ke Database (SQLite/MySQL)
+    return jsonify({"status": "success", "message": "Data tersimpan di server"})
+
 if __name__ == '__main__':
+    # Server berjalan di port 5000
     app.run(debug=True, port=5000)
