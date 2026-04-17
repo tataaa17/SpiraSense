@@ -129,7 +129,7 @@ btnAnalyze.addEventListener('click', async () => {
     const backendUrl = 'http://localhost:5000/api/predict'; 
 
     try {
-        const response = await fetch(backendUrl, {
+        const response = await fetch('http://127.0.0.1:5000/api/predict', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -151,7 +151,7 @@ btnAnalyze.addEventListener('click', async () => {
         predictionOutput.classList.remove('hidden');
 
         document.getElementById('predictionLabel').innerText = data.prediction;
-        document.getElementById('predictionConfidence').innerText = `Confidence: ${(data.confidence * 100).toFixed(1)}%`;
+        document.getElementById('predictionConfidence').innerText = `Confidence: ${(data.confidence).toFixed(1)}%`;
 
     } catch (error) {
         // Penanganan error jika backend tidak respon

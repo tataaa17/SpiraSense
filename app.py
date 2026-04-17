@@ -31,7 +31,7 @@ def preprocess_image(img_data):
     
     # Penajaman (Sharpening)
     kernel = np.array([[-1,-1,-1], 
-                       [-1, 9,-1],
+                       [-1, 5,-1],
                        [-1,-1,-1]])
     img = cv2.filter2D(img, -1, kernel)
     
@@ -53,28 +53,31 @@ def predict():
         processed_data = preprocess_image(image_data)
         
         # Prediksi Probabilitas
-        # [0][0] = Normal, [0][1] = Parkinson
         probabilities = model.predict_proba(processed_data)
-        parkinson_prob = float(probabilities[0][1])
         
-        # Logika Threshold (Sensitivity Adjustment)
-        # Jika probabilitas > 0.4, kita anggap Indikasi Parkinson (lebih sensitif)
-        threshold = 0.4 
+        # Ambil probabilitas parkinson (indeks 1)
+        parkinson_prob = float(probabilities[0][1]) # Langsung konversi ke float Python
+        normal_prob = float(probabilities[0][0])    # Langsung konversi ke float Python
+        
+        threshold = 0.64 # Sesuai diskusi kita, biar tidak terlalu paranoid
         
         if parkinson_prob > threshold:
             result = "Indikasi Parkinson"
+            # Ambil nilai probabilitas parkinson sebagai confidence
             confidence = parkinson_prob
         else:
             result = "Normal"
-            confidence = probabilities[0][0]
+            # Ambil nilai probabilitas normal sebagai confidence
+            confidence = normal_prob
 
         return jsonify({
             "prediction": result,
-            "confidence": round(confidence * 100, 2), # Kirim dalam persentase
-            "raw_prob": parkinson_prob # Opsional untuk debugging
+            "confidence": round(confidence * 100, 2), # Hasilnya misal: 88.99
+            "raw_prob": round(parkinson_prob, 4)
         })
         
     except Exception as e:
+        # Ini akan membantu kamu melihat error apa yang terjadi di terminal VS Code
         print(f"Error during prediction: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
