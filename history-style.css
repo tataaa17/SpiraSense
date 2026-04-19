@@ -67,3 +67,47 @@ textarea { width: 100%; margin-top: 10px; border-radius: 8px; border: 1px solid 
 
 .hidden { display: none; }
 .history-footer { text-align: center; padding: 3rem; color: #888; font-size: 0.85rem; }
+
+.hidden {
+    display: none !important;
+}
+
+.modal {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+/* CSS Badge agar hasil test terlihat berwarna */
+.badge {
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+.badge-normal { background: #d1fae5; color: #065f46; }
+.badge-parkinson { background: #fee2e2; color: #991b1b; }
+
+.btn-action {
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid #ddd;
+    background: white;
+}
+
+.btn-action.delete:hover {
+    background: #fa5252 !important;
+    color: white !important;
+    transform: scale(1.1);
+}
+
+.btn-action.view:hover {
+    background: var(--maroon);
+    color: white;
+}

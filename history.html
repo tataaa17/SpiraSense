@@ -39,13 +39,13 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>Tanggal</th>
+                            <th style="width: 120px;">Tanggal</th>
                             <th>Nama Pasien</th>
-                            <th>Visual</th>
-                            <th>Hasil Prediksi</th>
-                            <th>Keyakinan</th>
+                            <th>Instansi</th>
+                            <th style="width: 80px;">Visual</th>
+                            <th>Hasil & Level</th>
                             <th>Catatan Medis</th>
-                            <th>Aksi</th>
+                            <th style="width: 100px; text-align: center;">Aksi</th>
                         </tr>
                     </thead>
                     <tbody id="historyBody">
@@ -74,8 +74,10 @@
                 <button class="close-btn" onclick="closeModal('editModal')">&times;</button>
             </div>
             <div class="modal-body">
-                <label for="editNotes">Catatan Baru:</label>
-                <textarea id="editNotes" rows="4"></textarea>
+                <p style="font-size: 0.9rem; color: #666; margin-bottom: 10px;">
+                    Tambahkan observasi klinis atau tindak lanjut untuk pasien ini.
+                </p>
+                <textarea id="editNotes" rows="5" placeholder="Tulis catatan medis di sini..."></textarea>
                 <div class="modal-btns">
                     <button class="btn-outline" onclick="closeModal('editModal')">Batal</button>
                     <button id="btnUpdateSave" class="btn-primary">Simpan Perubahan</button>
@@ -89,5 +91,18 @@
     </footer>
 
     <script src="history-script.js"></script>
+
+    <script>
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+        
+        // Menutup modal jika user klik di luar area modal (overlay)
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.classList.add('hidden');
+            }
+        }
+    </script>
 </body>
 </html>

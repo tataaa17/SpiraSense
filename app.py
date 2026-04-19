@@ -8,13 +8,20 @@ import cv2
 import os
 
 app = Flask(__name__)
-# Agar session bisa tersimpan di browser (withCredentials)
+
+# Konfigurasi CORS agar mendukung pertukaran identitas (session/cookie)
 CORS(app, supports_credentials=True)
 
 # --- CONFIGURATION ---
 app.secret_key = 'spira_sense_secret_key' 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///spirasensenew.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Pengaturan agar cookie session stabil antara port 5500 dan 5000
+app.config.update(
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SECURE=False,
+)
 
 db = SQLAlchemy(app)
 
@@ -35,10 +42,11 @@ class Warga(db.Model):
 class Skrining(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     warga_id = db.Column(db.Integer, db.ForeignKey('warga.id'))
-    petugas_id = db.Column(db.Integer, db.ForeignKey('petugas.id'))
+    petugas_id = db.Column(db.Integer, db.ForeignKey('petugas.id'), nullable=True)
     hasil = db.Column(db.String(50))
     level = db.Column(db.String(50))
     visual = db.Column(db.Text)
+    catatan = db.Column(db.Text, default="") # Kolom yang kamu tambahkan tadi
     tanggal = db.Column(db.DateTime, default=db.func.current_timestamp())
 
 # --- 2. LOAD MODEL XGBOOST ---
@@ -74,8 +82,12 @@ def login():
     user = Petugas.query.filter_by(email=data['email'], password=data['password']).first()
     if user:
         session['user_id'] = user.id 
-        session.permanent = True # Agar session tidak cepat hilang
-        return jsonify({"status": "success", "message": "Login Berhasil!"})
+        session.permanent = True 
+        return jsonify({
+            "status": "success", 
+            "petugas_id": user.id,
+            "nama_instansi": user.nama_instansi
+        })
     return jsonify({"status": "error", "message": "Email/Password salah!"}), 401
 
 # --- 5. ENDPOINT WARGA ---
@@ -94,36 +106,30 @@ def register_warga():
         db.session.rollback()
         return jsonify({"status": "error", "message": str(e)}), 500
 
-# --- 6. PREDIKSI & AUTO-SAVE (FIXED) ---
+# --- 6. PREDIKSI (CREATE) ---
 @app.route('/api/predict', methods=['POST'])
 def predict():
     try:
         data = request.json
         warga_id = data.get('warga_id')
-        image_raw = data['image'].split(",")[1] # Ambil data base64
-        
-        p_id = session.get('user_id') 
-        print(f"--- DEBUG: Akses oleh Petugas ID: {p_id} ---")
+        image_raw = data['image'].split(",")[1]
+        p_id = data.get('petugas_id') or session.get('user_id')
 
-        if not p_id:
-            return jsonify({"status": "error", "message": "Sesi login hilang, silakan login ulang!"}), 401
-
-        # LOGIKA PREDIKSI (YANG SEMPAT HILANG)
         processed_data = preprocess_image(image_raw)
         probabilities = model.predict_proba(processed_data)
-        parkinson_prob = float(probabilities[0][1])
+        park_prob = float(probabilities[0][1])
         
-        result = "Indikasi Parkinson" if parkinson_prob > 0.6 else "Normal"
-        level = "Tinggi" if parkinson_prob > 0.8 else "Stabil"
+        result = "Indikasi Parkinson" if park_prob > 0.6 else "Normal"
+        level = "Stabil" if park_prob <= 0.6 else ("Tinggi" if park_prob > 0.8 else "Sedang")
 
-        # SIMPAN KE DATABASE
         if warga_id:
             history = Skrining(
                 warga_id=warga_id,
                 petugas_id=p_id,
                 hasil=result,
                 level=level,
-                visual=data['image']
+                visual=data['image'],
+                catatan="" 
             )
             db.session.add(history)
             db.session.commit()
@@ -135,24 +141,60 @@ def predict():
             "confidence": round(float(np.max(probabilities)) * 100, 2)
         })
     except Exception as e:
-        print(f"ERROR PREDICT: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
-# --- 7. HISTORY ---
+# --- 7. HISTORY (READ) ---
 @app.route('/api/history', methods=['GET'])
 def get_history():
-    records = db.session.query(Skrining, Warga).join(Warga).all()
+    # Gunakan outerjoin agar data user "Umum" yang tidak punya petugas tetap muncul
+    records = db.session.query(Skrining, Warga, Petugas)\
+                .join(Warga, Skrining.warga_id == Warga.id)\
+                .outerjoin(Petugas, Skrining.petugas_id == Petugas.id)\
+                .order_by(Skrining.tanggal.desc()).all()
+    
     output = []
-    for skrining, warga in records:
+    for s, w, p in records:
         output.append({
-            "id": skrining.id,
-            "tanggal": skrining.tanggal.strftime("%Y-%m-%d %H:%M"),
-            "nama_pasien": warga.nama,
-            "hasil": skrining.hasil,
-            "level": skrining.level,
-            "visual": skrining.visual
+            "id": s.id,
+            "tanggal": s.tanggal.strftime("%d %b %Y"),
+            "nama_pasien": w.nama,
+            "instansi": p.nama_instansi if p else "Mandiri/Umum",
+            "hasil": s.hasil,
+            "level": s.level,
+            "visual": s.visual,
+            "catatan": s.catatan 
         })
     return jsonify(output)
+
+# --- 8. UPDATE NOTES (UPDATE) ---
+@app.route('/api/update-history/<int:id>', methods=['PUT'])
+def update_history(id):
+    try:
+        data = request.json
+        record = Skrining.query.get(id)
+        if not record:
+            return jsonify({"status": "error", "message": "Data tidak ditemukan"}), 404
+        
+        record.catatan = data.get('catatan', '')
+        db.session.commit()
+        return jsonify({"status": "success", "message": "Catatan medis diperbarui!"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+# --- 9. DELETE HISTORY (DELETE) ---
+@app.route('/api/delete-history/<int:id>', methods=['DELETE'])
+def delete_history(id):
+    try:
+        record = Skrining.query.get(id)
+        if record:
+            db.session.delete(record)
+            db.session.commit()
+            return jsonify({"status": "success", "message": "Data berhasil dihapus"})
+        return jsonify({"status": "error", "message": "Data tidak ditemukan"}), 404
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == '__main__':
     with app.app_context():

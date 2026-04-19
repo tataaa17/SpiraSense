@@ -19,7 +19,7 @@ const displayNik = document.getElementById('displayNik');
 let isDrawing = false;
 let lastX = 0, lastY = 0;
 
-// Pengaturan Canvas (Warna Maroon khas SpiraSense)
+// Pengaturan Canvas
 ctx.strokeStyle = '#7F0303'; 
 ctx.lineWidth = 4;
 ctx.lineJoin = 'round';
@@ -27,7 +27,7 @@ ctx.lineCap = 'round';
 
 // --- 2. LOGIKA PENDAFTARAN PASIEN ---
 formWarga.addEventListener('submit', async (e) => {
-    e.preventDefault(); // Mencegah refresh halaman
+    e.preventDefault(); 
     console.log("Mendaftarkan pasien...");
 
     const dataPasien = {
@@ -42,33 +42,30 @@ formWarga.addEventListener('submit', async (e) => {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(dataPasien),
-            credentials: 'include' // PENTING: Mengirim cookie session petugas
+            credentials: 'include' 
         });
 
         const result = await response.json();
 
         if (result.status === 'success') {
-            // Simpan ID Warga untuk proses prediksi nanti
             localStorage.setItem('current_warga_id', result.warga_id);
             
-            // Update Banner Info Pasien
             displayNama.innerText = dataPasien.nama;
             displayNik.innerText = dataPasien.nik;
 
-            // Transisi Visual
             sectionPasien.classList.add('hidden');
             sectionTes.classList.remove('hidden');
-            console.log("Registrasi warga sukses, ID:", result.warga_id);
+            console.log("Warga terdaftar, ID:", result.warga_id);
         } else {
             alert("Gagal daftar: " + result.message);
         }
     } catch (err) {
         console.error("Error pendaftaran:", err);
-        alert("Gagal menghubungi server. Pastikan Flask sudah jalan.");
+        alert("Gagal menghubungi server.");
     }
 });
 
-// --- 3. FUNGSI DRAWING (Sesuai kode kamu) ---
+// --- 3. FUNGSI DRAWING (Tetap Sama) ---
 function getCoordinates(e) {
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
@@ -100,9 +97,8 @@ canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(
 canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); }, {passive: false});
 canvas.addEventListener('touchend', stopDrawing);
 
-// --- 4. LOGIKA ANALISIS & AUTO-SAVE ---
+// --- 4. LOGIKA ANALISIS & AUTO-SAVE (MODIFIED FOR HYBRID MODE) ---
 btnAnalyze.addEventListener('click', async () => {
-    // Validasi apakah sudah menggambar
     const pixelData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
     let hasDrawing = false;
     for (let i = 3; i < pixelData.length; i += 4) {
@@ -114,13 +110,15 @@ btnAnalyze.addEventListener('click', async () => {
         return;
     }
 
-    // UI Feedback
     resultPanel.classList.remove('hidden');
     progressIndicator.classList.remove('hidden');
     predictionOutput.classList.add('hidden');
 
     const imageDataURL = canvas.toDataURL('image/png');
     const wargaId = localStorage.getItem('current_warga_id');
+    
+    // Jika user umum, petugasId akan otomatis 'null'
+    const petugasId = localStorage.getItem('active_petugas_id'); 
 
     try {
         const response = await fetch('http://127.0.0.1:5000/api/predict', {
@@ -128,28 +126,35 @@ btnAnalyze.addEventListener('click', async () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 image: imageDataURL,
-                warga_id: wargaId
+                warga_id: wargaId,
+                petugas_id: petugasId 
             }),
-            credentials: 'include' // PENTING: Agar petugas_id terekam di database
+            credentials: 'include' 
         });
 
         const data = await response.json();
 
-        progressIndicator.classList.add('hidden');
-        predictionOutput.classList.remove('hidden');
+        if (data.status === 'success') {
+            progressIndicator.classList.add('hidden');
+            predictionOutput.classList.remove('hidden');
 
-        // Update Label Hasil
-        const label = document.getElementById('predictionLabel');
-        label.innerText = data.prediction;
-        document.getElementById('predictionConfidence').innerText = `Confidence: ${data.confidence}%`;
-
-        // Styling Warna Hasil
-        label.style.color = (data.prediction === "Normal") ? "#27ae60" : "#7F0303";
+            const label = document.getElementById('predictionLabel');
+            label.innerText = data.prediction;
+            document.getElementById('predictionConfidence').innerText = `Confidence: ${data.confidence}%`;
+            label.style.color = (data.prediction === "Normal") ? "#27ae60" : "#7F0303";
+            
+            console.log("Analisis berhasil disimpan.");
+        } else {
+            // Kita tidak lagi memaksa pindah ke login.html
+            // Cukup tampilkan error saja jika ada masalah teknis
+            progressIndicator.classList.add('hidden');
+            alert("Gagal Analisis: " + data.message);
+        }
 
     } catch (error) {
         console.error("Error prediksi:", error);
         progressIndicator.classList.add('hidden');
-        alert("Terjadi kesalahan saat menghubungi server prediksi.");
+        alert("Terjadi kesalahan saat menghubungi server.");
     }
 });
 
