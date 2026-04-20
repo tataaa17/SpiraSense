@@ -94,17 +94,39 @@ def login():
 @app.route('/api/register-warga', methods=['POST'])
 def register_warga():
     data = request.json
-    warga_lama = Warga.query.filter_by(nik=data['nik']).first()
+    nik_input = str(data.get('nik', '')).strip() # Ambil NIK dan hapus spasi jika ada
+
+    # --- VALIDASI NIK: WAJIB 16 DIGIT ---
+    if len(nik_input) != 16:
+        return jsonify({
+            "status": "error", 
+            "message": f"NIK tidak valid! Harus tepat 16 digit. (Input Anda: {len(nik_input)} digit)"
+        }), 400 # 400 adalah kode Error untuk 'Bad Request'
+
+    # Cek apakah warga dengan NIK tersebut sudah ada di database
+    warga_lama = Warga.query.filter_by(nik=nik_input).first()
     if warga_lama:
+        # Jika sudah ada, langsung kembalikan ID-nya (agar tidak duplikat)
         return jsonify({"status": "success", "warga_id": warga_lama.id})
+    
     try:
-        warga_baru = Warga(nik=data['nik'], nama=data['nama'], umur=data['umur'], alamat=data.get('alamat', ''))
+        # Jika NIK valid dan belum terdaftar, buat data baru
+        warga_baru = Warga(
+            nik=nik_input, 
+            nama=data.get('nama'), 
+            umur=data.get('umur'), 
+            alamat=data.get('alamat', '')
+        )
         db.session.add(warga_baru)
         db.session.commit()
+        
+        print(f"--- DEBUG: Warga baru berhasil didaftarkan: {warga_baru.nama} ---")
         return jsonify({"status": "success", "warga_id": warga_baru.id})
+        
     except Exception as e:
-        db.session.rollback()
-        return jsonify({"status": "error", "message": str(e)}), 500
+        db.session.rollback() # Batalkan transaksi jika terjadi error database
+        print(f"--- DEBUG ERROR: {str(e)} ---")
+        return jsonify({"status": "error", "message": "Terjadi kesalahan pada database."}), 500
 
 # --- 6. PREDIKSI (CREATE) ---
 @app.route('/api/predict', methods=['POST'])
