@@ -1,0 +1,20 @@
+# --- Database & Flask Specific ---
+instance/
+*.db
+*.sqlite
+
+# --- Python Environment ---
+__pycache__/
+*.pyc
+venv/
+.venv/
+env/
+
+# --- Security (Sangat Penting!) ---
+.env
+
+# --- OS & IDE Specific ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
