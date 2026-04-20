@@ -38,7 +38,6 @@ function renderTable(data) {
             </td>
             <td>
                 <span class="badge ${badgeClass}">${item.hasil}</span>
-                <div style="font-size: 0.7rem; color: #999; margin-top: 4px;">Confidence: ${item.level}</div>
             </td>
             <td style="font-size: 0.85rem; color: #555; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                 ${item.catatan || '<span style="color:#ddd; font-style:italic;">Kosong</span>'}
