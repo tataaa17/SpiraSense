@@ -9,13 +9,6 @@ SpiraSense adalah aplikasi berbasis web yang dirancang untuk membantu deteksi di
 - Categorical Results: Output diagnosis yang humanis (Normal vs Indikasi Parkinson) disertai dengan tingkat akurasi kategori (Sedang/Tinggi).
 
 
-# Prasyarat 
-Sebelum menjalankan proyek ini, pastikan komputer Anda telah memenuhi spesifikasi berikut:
-- Python 3.8 - 3.11 (Direkomendasikan versi 3.10 untuk stabilitas library XGBoost).
-- Pip (Python Package Manager).
-- Browser modern (Chrome, Edge, atau Firefox).
-
-
 # Instalasi & Cara Menjalankan
 Ikuti langkah-langkah berikut untuk menjalankan SpiraSense di komputer lokal Anda:
 1. Persiapan Folder : Pastikan seluruh file proyek (app.py, model, dan file HTML) berada dalam satu direktori yang sama.
@@ -56,3 +49,4 @@ Sistem ini dikembangkan dengan pertimbangan sebagai berikut:
 - Sensitivity: Model memberikan bobot lebih pada kelas Parkinson untuk memastikan deteksi dini yang lebih waspada.
 
 # Kontributor
+Team SpiraSense
