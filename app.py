@@ -115,13 +115,31 @@ def predict():
         image_raw = data['image'].split(",")[1]
         p_id = data.get('petugas_id') or session.get('user_id')
 
+        # Preprocessing
         processed_data = preprocess_image(image_raw)
         probabilities = model.predict_proba(processed_data)
-        park_prob = float(probabilities[0][1])
         
-        result = "Indikasi Parkinson" if park_prob > 0.6 else "Normal"
-        level = "Stabil" if park_prob <= 0.6 else ("Tinggi" if park_prob > 0.8 else "Sedang")
+        # Ambil probabilitas parkinson (indeks 1)
+        park_prob = float(probabilities[0][1])
+        norm_prob = float(probabilities[0][0])
+        
+        # --- KEMBALIKAN THRESHOLD---
+        threshold = 0.58
+        
+        if park_prob > threshold:
+            result = "Indikasi Parkinson"
+            # Penentuan Level berdasarkan diskusi terakhir kita
+            if park_prob > 0.8:
+                level = "Tingkat Akurasi: Tinggi"
+            else:
+                level = "Tingkat Akurasi: Sedang"
+            confidence = park_prob
+        else:
+            result = "Normal"
+            level = "Kondisi: Stabil"
+            confidence = norm_prob
 
+        # Simpan ke Database (Jangan diubah agar kerjaan temanmu aman)
         if warga_id:
             history = Skrining(
                 warga_id=warga_id,
@@ -134,13 +152,17 @@ def predict():
             db.session.add(history)
             db.session.commit()
 
+        # Respon ke Frontend
         return jsonify({
             "status": "success",
             "prediction": result,
             "level": level,
-            "confidence": round(float(np.max(probabilities)) * 100, 2)
+            # Kita kirim angkanya, tapi kalau di HTML sudah kamu hapus, 
+            # dia tidak akan muncul di web.
+            "confidence": round(float(confidence) * 100, 2)
         })
     except Exception as e:
+        print(f"Error: {str(e)}") # Agar terlihat di terminal kalau ada error
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # --- 7. HISTORY (READ) ---

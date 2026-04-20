@@ -7,6 +7,7 @@ const btnDownload = document.getElementById('btnDownload');
 const resultPanel = document.getElementById('resultPanel');
 const progressIndicator = document.getElementById('progressIndicator');
 const predictionOutput = document.getElementById('predictionOutput');
+const predictionLabel = document.getElementById('predictionLabel'); // Label hasil utama
 
 // Elemen Alur Pasien
 const formWarga = document.getElementById('formWarga');
@@ -65,7 +66,7 @@ formWarga.addEventListener('submit', async (e) => {
     }
 });
 
-// --- 3. FUNGSI DRAWING (Tetap Sama) ---
+// --- 3. FUNGSI DRAWING ---
 function getCoordinates(e) {
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
@@ -97,7 +98,7 @@ canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(
 canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); }, {passive: false});
 canvas.addEventListener('touchend', stopDrawing);
 
-// --- 4. LOGIKA ANALISIS & AUTO-SAVE (MODIFIED FOR HYBRID MODE) ---
+// --- 4. LOGIKA ANALISIS ---
 btnAnalyze.addEventListener('click', async () => {
     const pixelData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
     let hasDrawing = false;
@@ -110,14 +111,12 @@ btnAnalyze.addEventListener('click', async () => {
         return;
     }
 
-    resultPanel.classList.remove('hidden');
+    // Tampilkan Loading
     progressIndicator.classList.remove('hidden');
     predictionOutput.classList.add('hidden');
 
     const imageDataURL = canvas.toDataURL('image/png');
     const wargaId = localStorage.getItem('current_warga_id');
-    
-    // Jika user umum, petugasId akan otomatis 'null'
     const petugasId = localStorage.getItem('active_petugas_id'); 
 
     try {
@@ -138,15 +137,20 @@ btnAnalyze.addEventListener('click', async () => {
             progressIndicator.classList.add('hidden');
             predictionOutput.classList.remove('hidden');
 
-            const label = document.getElementById('predictionLabel');
-            label.innerText = data.prediction;
-            document.getElementById('predictionConfidence').innerText = `Confidence: ${data.confidence}%`;
-            label.style.color = (data.prediction === "Normal") ? "#27ae60" : "#7F0303";
+            // Set Teks Hasil
+            predictionLabel.innerText = data.prediction;
+
+            // Atur Warna Berdasarkan Hasil
+            predictionLabel.classList.remove('result-normal', 'result-parkinson');
+            if (data.prediction === "Normal") {
+                predictionLabel.classList.add('result-normal');
+            } else {
+                predictionLabel.classList.add('result-parkinson');
+            }
             
-            console.log("Analisis berhasil disimpan.");
+            // Note: Baris confidence dihapus sesuai request kamu
+            console.log("Analisis Berhasil:", data.prediction);
         } else {
-            // Kita tidak lagi memaksa pindah ke login.html
-            // Cukup tampilkan error saja jika ada masalah teknis
             progressIndicator.classList.add('hidden');
             alert("Gagal Analisis: " + data.message);
         }
@@ -161,7 +165,9 @@ btnAnalyze.addEventListener('click', async () => {
 // --- 5. KONTROL TOMBOL ---
 btnClear.addEventListener('click', () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    resultPanel.classList.add('hidden');
+    // Kita hanya sembunyikan output prediksi, bukan seluruh resultPanel
+    // Agar Informasi Pasien tetap terlihat di kanan atas
+    predictionOutput.classList.add('hidden');
 });
 
 btnDownload.addEventListener('click', () => {
