@@ -6,10 +6,65 @@
     <title>SpiraSense - Test Page</title>
     <link rel="stylesheet" href="test-style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        /* Styling tambahan untuk hasil agar terlihat bagus */
+        #predictionLabel {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin: 1rem 0;
+            line-height: 1.2;
+        }
+        
+        /* Warna dinamis untuk hasil */
+        .result-normal { color: #27ae60; } /* Hijau */
+        .result-parkinson { color: #e74c3c; } /* Merah */
+
+        .prediction-output {
+            text-align: center;
+            padding: 1rem 0;
+        }
+
+        /* --- PERBAIKAN PANEL KANAN --- */
+        
+        /* Container untuk membungkus dua kotak di sisi kanan agar ada jarak */
+        .right-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px; /* Jarak antar kotak */
+        }
+
+        /* Style dasar untuk kotak panel (mengikuti desain lama kamu) */
+        .info-card-box {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border: 1px solid #eee;
+        }
+
+        /* Area putih khusus untuk Nama & NIK */
+        .patient-data-white {
+            background: #ffffff !important; /* Latar belakang putih */
+            margin: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #efefef;
+            color: var(--midnight-blue);
+        }
+
+        .patient-data-white p {
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+
+        .patient-data-white p:last-child {
+            margin-bottom: 0;
+        }
+    </style>
 </head>
 <body>
 
-    <nav class="navbar">
+<nav class="navbar">
     <div class="container">
         <div class="logo">Spira<span>Sense</span></div>
         <a href="index.html" class="btn-back">
@@ -23,81 +78,88 @@
 </nav>
 
 <main class="test-container">
-        <section id="patientRegistration" class="auth-box" style="margin: 2rem auto; max-width: 500px;">
-            <div style="text-align: center; margin-bottom: 1.5rem;">
-                <h2 style="color: var(--midnight-blue);">Pendaftaran Pasien</h2>
-                <p style="font-size: 0.9rem; color: #666;">Masukkan identitas warga lansia sebelum memulai tes.</p>
+    <section id="patientRegistration" class="auth-box" style="margin: 2rem auto; max-width: 500px;">
+        <div style="text-align: center; margin-bottom: 1.5rem;">
+            <h2 style="color: var(--midnight-blue);">Pendaftaran Pasien</h2>
+            <p style="font-size: 0.9rem; color: #666;">Masukkan identitas warga lansia sebelum memulai tes.</p>
+        </div>
+        
+        <form id="formWarga" class="auth-form">
+            <input type="text" id="nik" placeholder="NIK Pasien (16 Digit)" required maxlength="16">
+            <input type="text" id="nama" placeholder="Nama Lengkap Pasien" required>
+            <input type="number" id="umur" placeholder="Usia (Tahun)" required>
+            <textarea id="alamat" placeholder="Alamat Domisili" style="width: 100%; padding: 10px; border-radius: 8px; border: 2px solid #e0e0e0;"></textarea>
+            <button type="submit" class="btn-auth" style="background-color: var(--midnight-blue); color: white; padding: 1rem; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px;">
+                Daftarkan & Mulai Tes →
+            </button>
+        </form>
+    </section>
+
+    <div id="mainTestGrid" class="test-grid hidden">
+        
+        <aside class="instruction-panel">
+            <div class="panel-header">Instruksi Tes</div>
+            <div class="panel-body">
+                <ul>
+                    <li>Gunakan perangkat input secara stabil.</li>
+                    <li>Ikuti alur garis panduan spiral pada kanvas.</li>
+                    <li>Lakukan penggambaran dalam satu tarikan garis.</li>
+                    <li>Klik <strong>"Analisis Spiral"</strong> jika sudah selesai.</li>
+                </ul>
             </div>
-            
-            <form id="formWarga" class="auth-form">
-                <input type="text" id="nik" placeholder="NIK Pasien (16 Digit)" required maxlength="16">
-                <input type="text" id="nama" placeholder="Nama Lengkap Pasien" required>
-                <input type="number" id="umur" placeholder="Usia (Tahun)" required>
-                <textarea id="alamat" placeholder="Alamat Domisili" style="width: 100%; padding: 10px; border-radius: 8px; border: 2px solid #e0e0e0;"></textarea>
-                <button type="submit" class="btn-auth" style="background-color: var(--midnight-blue); color: white; padding: 1rem; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px;">
-                    Daftarkan & Mulai Tes →
-                </button>
-            </form>
+        </aside>
+
+        <section class="drawing-area">
+            <div class="canvas-wrapper">
+                <div class="spiral-guide">
+                    <img src="spiral-guide.png" alt="Spiral Guide Line">
+                </div>
+                <canvas id="drawingCanvas" width="500" height="500"></canvas>
+            </div>
+
+            <div class="control-buttons">
+                <button id="btnClear" class="btn-secondary">Hapus Gambar</button>
+                <button id="btnAnalyze" class="btn-primary">Analisis Spiral →</button>
+                <button id="btnDownload" class="btn-outline">Unduh Gambar</button>
+            </div>
         </section>
 
-        <div id="mainTestGrid" class="test-grid hidden">
+        <div class="right-sidebar">
             
-            <aside class="instruction-panel">
+            <aside class="info-card-box">
                 <div class="panel-header">Informasi Pasien</div>
-                <div class="panel-body" style="background: var(--tan); color: var(--midnight-blue); margin-bottom: 1rem; border-radius: 8px; padding: 1rem;">
+                <div class="patient-data-white">
                     <p>Nama: <strong id="displayNama">--</strong></p>
                     <p>NIK: <span id="displayNik">--</span></p>
                 </div>
-
-                <div class="panel-header">Instruksi Tes</div>
-                <div class="panel-body">
-                    <ul>
-                        <li>Gunakan perangkat input secara stabil.</li>
-                        <li>Ikuti alur garis panduan spiral pada kanvas.</li>
-                        <li>Lakukan penggambaran dalam satu tarikan garis.</li>
-                        <li>Klik <strong>"Analyze Spiral"</strong> jika sudah selesai.</li>
-                    </ul>
-                </div>
             </aside>
 
-            <section class="drawing-area">
-                <div class="canvas-wrapper">
-                    <div class="spiral-guide">
-                        <img src="spiral-guide.png" alt="Spiral Guide Line">
-                    </div>
-                    <canvas id="drawingCanvas" width="500" height="500"></canvas>
-                </div>
-
-                <div class="control-buttons">
-                    <button id="btnClear" class="btn-secondary">Clear Drawing</button>
-                    <button id="btnAnalyze" class="btn-primary">Analyze Spiral →</button>
-                    <button id="btnDownload" class="btn-outline">Download Image</button>
-                </div>
-            </section>
-
-            <aside id="resultPanel" class="result-panel hidden">
-                <div class="panel-header">AI Analysis Result</div>
+            <aside id="resultPanel" class="info-card-box">
+                <div class="panel-header">Hasil Analisis</div>
                 <div class="panel-body">
                     <div id="progressIndicator" class="progress-indicator hidden">
                         <div class="spinner"></div>
-                        <p>Analyzing your drawing...</p>
+                        <p>Menganalisis gambar spiral...</p>
                     </div>
 
                     <div id="predictionOutput" class="prediction-output hidden">
-                        <h3 id="predictionLabel">Prediction</h3>
-                        <p id="predictionConfidence">Confidence: --%</p>
-                        <hr style="margin: 1rem 0; border: 0; border-top: 1px solid #ddd;">
-                        <button onclick="window.location.href='history.html'" class="btn-primary" style="width: 100%; font-size: 0.8rem;">Lihat di History</button>
+                        <h3 id="predictionLabel">Menunggu Hasil...</h3>
+                        
+                        <hr style="margin: 1.5rem 0 1rem 0; border: 0; border-top: 1px solid #eee;">
+                        <button onclick="window.location.href='history.html'" class="btn-primary" style="width: 100%; font-size: 0.9rem; padding: 0.8rem;">
+                            Lihat Detail di History
+                        </button>
                     </div>
                 </div>
             </aside>
-        </div>
-    </main>
 
-    <footer class="test-footer">
-        <p><strong>Disclaimer:</strong> Alat ini adalah skrining awal. Hasil harus dikonsultasikan dengan dokter saraf (Neurolog).</p>
-    </footer>
+        </div> </div>
+</main>
 
-    <script src="test-script.js"></script>
+<footer class="test-footer">
+    <p><strong>Disclaimer:</strong> Alat ini adalah skrining awal. Hasil harus dikonsultasikan dengan dokter spesialis saraf.</p>
+</footer>
+
+<script src="test-script.js"></script>
 </body>
 </html>
