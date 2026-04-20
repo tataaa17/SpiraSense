@@ -1,0 +1,4 @@
+Sebelum menjalankan proyek ini, pastikan komputer Anda telah memenuhi spesifikasi berikut:
+- Python 3.8 - 3.11 (Direkomendasikan versi 3.10 untuk stabilitas library XGBoost).
+- Pip (Python Package Manager).
+- Browser modern (Chrome, Edge, atau Firefox).
