@@ -31,8 +31,16 @@ formWarga.addEventListener('submit', async (e) => {
     e.preventDefault(); 
     console.log("Mendaftarkan pasien...");
 
+    const nikInput = document.getElementById('nik').value.trim(); // Ambil & bersihkan spasi
+
+    // --- VALIDASI NIK (KEMBALI DISIPLIN) ---
+    if (nikInput.length !== 16) {
+        alert("⚠️ NIK tidak valid!. (Input saat ini: " + nikInput.length + " digit)");
+        return; // BERHENTI DI SINI, jangan lanjut ke proses fetch
+    }
+
     const dataPasien = {
-        nik: document.getElementById('nik').value,
+        nik: nikInput,
         nama: document.getElementById('nama').value,
         umur: document.getElementById('umur').value,
         alamat: document.getElementById('alamat').value
